@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大樹卡片製作器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+    background-image: url('1.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed; 
+    background-color: rgba(255, 255, 255, 0.5);
+    background-blend-mode: lighten;
+        }
+
+        #cardPreview {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #cardPreview > div:not(:first-child) {
+            width: 100%;
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e1e1;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        select {
+            appearance: none;
+            padding-right: 24px;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333333'%3E%3Cpolygon points='6,0 12,12 0,12'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position-x: 95%;
+            background-position-y: 50%;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+    /* 添加名稱文字顏色樣式 */
+    #nameStyle {
+        /* 使用JavaScript中的變數來套用文字顏色 */
+        color: var(--name-color, #ff5733);
+    }
+
+    /* 添加能力標籤文字顏色樣式 */
+    #labelStyle {
+        color: var(--label-color, #337ab7);
+    }
+
+    /* 添加能力內容文字顏色樣式 */
+    #abilityStyle {
+        color: var(--ability-color, #5cb85c);
+    }
+
+    /* 添加介紹文字顏色樣式 */
+    #introStyle {
+        color: var(--intro-color, #d9534f);
+    }
+
+
+        /* 使用媒體查詢來進行響應式調整 */
+        @media (max-width: 600px) {
+            /* 適用於螢幕寬度小於 600px 的情況 */
+            body {
+                background-size: cover; /* 調整背景圖片的尺寸 */
+                background-position: center; /* 調整背景圖片的位置 */
+            }
+
+            #cardPreview {
+                max-width: 100%; /* 讓卡片預覽在小螢幕上佔滿寬度 */
+                margin: 10px; /* 調整邊距 */
+            }
+
+            /* 其他元素的響應式調整 */
+            /* ... */
+        }
+        /* 新增的放大效果樣式 */
+        .card-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .card-modal.active {
+            display: flex;
+        }
+
+        .card-modal-content {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+            position: relative;
+            text-align: center;
+        }
+
+        .card-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h1>大樹卡片製作器</h1>
+    <h4>快速製作一張屬於你的卡片。</h4>
+    <h6>小提醒1：因瀏覽器渲染畫質較低，推薦使用螢幕截圖保留卡片。</h6>
+    <h6>小提醒2：電腦截圖快捷鍵："開始"+"shift"+"s"。</h6>
+    <div>
+        <button onclick="generateCard()">生成卡片</button>
+        <button onclick="downloadCard()">下載卡片</button>
+    </div>
+    <div>
+        <label for="imageUpload">上傳圖片：</label>
+        <input type="file" id="imageUpload">
+    </div>
+    <div id="result" style="display: none;">
+        <h2>卡片預覽</h2>
+        <div id="cardResult" style="display: flex; justify-content: center; align-items: center;">
+            <div id="cardPreview" style="border: 1px solid #ccc; display: flex; flex-direction: column;"></div>
+        </div>
+    </div>
+    <div>
+        <label for="cardName">名稱：</label>
+        <input type="text" id="cardName">
+    </div>
+
+    <div>
+        <label for="cardAbilityLabel">能力標籤：</label>
+        <input type="text" id="cardAbilityLabel" value="能力：">
+    </div>
+    <div>
+        <label for="cardAbility">能力內容：</label>
+        <input type="text" id="cardAbility" value="功能：">
+    </div>
+    <div>
+        <label for="cardIntro">介紹：</label>
+        <textarea id="cardIntro" rows="4"></textarea>
+    </div>
+
+
+    <div>
+        <label for="nameFontSize">名稱字體大小：</label>
+        <input type="number" id="nameFontSize" value="14">
+    </div>
+    <div>
+        <label for="labelFontSize">能力標籤字體大小：</label>
+        <input type="number" id="labelFontSize" value="12">
+    </div>
+    <div>
+        <label for="abilityFontSize">能力字體大小：</label>
+        <input type="number" id="abilityFontSize" value="9">
+    </div>
+    <div>
+        <label for="introFontSize">介紹字體大小：</label>
+        <input type="number" id="introFontSize" value="12">
+    </div>
+
+    <div>
+        <label for="nameAlignment">名稱對齊：</label>
+        <select id="nameAlignment">
+            <option value="left">置左</option>
+            <option value="center" selected>置中</option>
+            <option value="right">置右</option>
+        </select>
+    </div>
+    <div>
+        <label for="labelAlignment">能力標籤對齊：</label>
+        <select id="labelAlignment">
+            <option value="left">置左</option>
+            <option value="center" selected>置中</option>
+            <option value="right">置右</option>
+        </select>
+    </div>
+    <div>
+        <label for="abilityAlignment">能力內容對齊：</label>
+        <select id="abilityAlignment">
+            <option value="left">置左</option>
+            <option value="center" selected>置中</option>
+            <option value="right">置右</option>
+        </select>
+    </div>
+    <div>
+        <label for="introAlignment">介紹對齊：</label>
+        <select id="introAlignment">
+            <option value="left">置左</option>
+            <option value="center" selected>置中</option>
+            <option value="right">置右</option>
+        </select>
+    </div>
+    <div>
+        <label for="cardSize">卡片尺寸：</label>
+        <select id="cardSize">
+            <option value="54x90">54mm x 90mm</option>
+            <option value="59x86">59mm x 86mm</option>
+            <option value="63x88">63mm x 88mm</option>
+        </select>
+    </div>
+    <div>
+        <label for="imgMargin">圖片上邊距（mm）：</label>
+        <input type="number" id="imgMargin" value="6">
+    </div>
+    <div>
+        <label for="contentMargin">內容上邊距（mm）：</label>
+        <input type="number" id="contentMargin" value="0">
+    </div>
+    <div>
+        <label for="cardColor">卡片背景顏色：</label>
+        <input type="color" id="cardColor" value="#87CEEB">
+    </div>
+<div>
+    <label for="nameColor">名稱文字顏色：</label>
+    <input type="color" id="nameColor" value="#000000">
+</div>
+<div>
+    <label for="labelColor">能力標籤文字顏色：</label>
+    <input type="color" id="labelColor" value="#000000">
+</div>
+<div>
+    <label for="abilityColor">能力內容文字顏色：</label>
+    <input type="color" id="abilityColor" value="#000000">
+</div>
+<div>
+    <label for="introColor">介紹文字顏色：</label>
+    <input type="color" id="introColor" value="#000000">
+</div>
+    <div>
+        <label for="imgWidth">圖片寬度（0-50mm）：</label>
+        <input type="number" id="imgWidth" value="40">
+    </div>
+    <div>
+        <button onclick="generateCard()">生成卡片</button>
+        <button onclick="downloadCard()">下載卡片</button>
+    </div>
+
+    <!-- 新增的放大效果元素 -->
+<div class="card-modal" id="cardModal">
+    <div class="card-modal-content">
+        <span class="card-modal-close" onclick="closeCardModal()">&times;</span>
+        <div id="modalCardPreview"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
+<script>
+    function generateCard() {
+        const imageInput = document.getElementById('imageUpload');
+        if (!imageInput.files[0]) {
+            alert('請上傳圖片');
+            return;
+        }
+        const cardName = document.getElementById('cardName').value;
+        const cardAbilityLabel = document.getElementById('cardAbilityLabel').value;
+        const cardAbility = document.getElementById('cardAbility').value;
+        const cardIntro = document.getElementById('cardIntro').value;
+        const cardSizeValue = document.getElementById('cardSize').value;
+        const cardColor = document.getElementById('cardColor').value;
+        const imgMargin = document.getElementById('imgMargin').value;
+        const contentMargin = document.getElementById('contentMargin').value;
+        const imgWidth = document.getElementById('imgWidth').value;
+        const nameFontSize = document.getElementById('nameFontSize').value;
+        const nameAlignment = document.getElementById('nameAlignment').value;
+        const labelFontSize = document.getElementById('labelFontSize').value;
+        const labelAlignment = document.getElementById('labelAlignment').value;
+        const abilityFontSize = document.getElementById('abilityFontSize').value;
+        const abilityAlignment = document.getElementById('abilityAlignment').value;
+        const introFontSize = document.getElementById('introFontSize').value;
+        const introAlignment = document.getElementById('introAlignment').value;
+
+let cardSize;
+switch (cardSizeValue) {
+    case '54x90':
+        cardSize = [54, 90];
+        break;
+    case '59x86':
+        cardSize = [59, 86];
+        break;
+    case '63x88':
+        cardSize = [63, 88];
+        break;
+}
+
+        const cardPreview = document.getElementById('cardPreview');
+        cardPreview.style.backgroundColor = cardColor;
+        cardPreview.style.width = `${cardSize[0]}mm`;
+        cardPreview.style.height = `${cardSize[1]}mm`;
+
+        const imgStyle = `max-width: ${imgWidth}mm; max-height: 100%;`;
+        const contentStyle = `padding: 5px; text-align: center;`;
+
+    const nameColor = document.getElementById('nameColor').value;
+    const labelColor = document.getElementById('labelColor').value;
+    const abilityColor = document.getElementById('abilityColor').value;
+    const introColor = document.getElementById('introColor').value;
+
+    const nameStyle = `font-size: ${nameFontSize}px; text-align: ${nameAlignment}; margin-top: ${contentMargin}mm; color: ${nameColor};`;
+    const labelStyle = `font-size: ${labelFontSize}px; text-align: ${labelAlignment}; color: ${labelColor};`;
+    const abilityStyle = `font-size: ${abilityFontSize}px; text-align: ${abilityAlignment}; color: ${abilityColor};`;
+    const introStyle = `font-size: ${introFontSize}px; text-align: ${introAlignment}; color: ${introColor};`;
+
+cardPreview.innerHTML = `
+    <div style="display: flex; justify-content: center; align-items: flex-start; overflow: hidden; margin-top: ${imgMargin}mm;">
+        <img src="${URL.createObjectURL(imageInput.files[0])}" alt="Card Image" style="${imgStyle}">
+    </div>
+    <div style="${nameStyle} border-bottom: 1px solid #e1e1e1;"><h3>${cardName}</h3></div>
+    <div style="${labelStyle} border-bottom: 1px solid #e1e1e1;">${cardAbilityLabel}</div>
+    <div style="${abilityStyle} border-bottom: 1px solid #e1e1e1;">${cardAbility}</div>
+    <div style="${introStyle}">${cardIntro}</div>
+`;
+
+    document.getElementById('result').style.display = 'block';
+}
+
+    function downloadCard() {
+        const cardPreview = document.getElementById('cardPreview');
+
+        html2canvas(cardPreview, {
+            scale: 20, // DPI resolution (1mm = 3.7795275591px)
+            backgroundColor: null,
+            logging: false,
+            useCORS: true
+        }).then(function (canvas) {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'game_card.png';
+            link.click();
+        });
+    }
+
+        // 新增的放大效果函數
+    function showCardModal() {
+        const modalCardPreview = document.getElementById('modalCardPreview');
+        const clonedCard = document.getElementById('cardPreview').cloneNode(true); 
+        modalCardPreview.innerHTML = '';  // 清空之前的內容
+        modalCardPreview.appendChild(clonedCard);
+        document.getElementById('cardModal').style.display = 'block';
+    }
+
+    function closeCardModal() {
+        document.getElementById('cardModal').style.display = 'none';
+    }
+</script>
+
+<!-- 這將綁定點擊事件到卡片預覽 -->
+<script>
+    document.getElementById('cardPreview').addEventListener('click', showCardModal);
+</script>
+</body>
+</html>
